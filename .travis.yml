@@ -6,10 +6,11 @@ env:
     - BOTO_CONFIG=/dev/null
     - PIPENV_IGNORE_VIRTUALENVS=1
   matrix:
-    - COMMAND="pipenv run pytest --cov-report term-missing --cov=pakkr"
+    - COMMAND="pytest --cov-report term-missing --cov=pakkr"
 branches:
   only: [master]
 install:
+  - pip install pipenv
   - pipenv sync --dev
 script:
   - pipenv run $COMMAND

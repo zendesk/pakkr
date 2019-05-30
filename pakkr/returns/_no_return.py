@@ -31,7 +31,7 @@ class _NoReturn:
 
     def assert_is_superset(self, _type):
         """
-        Assert this instance is a superset of the give _type.
+        Assert this instance is a superset of the given _type.
 
         Parameters
         ----------

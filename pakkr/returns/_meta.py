@@ -3,8 +3,9 @@ from typing import Dict, Tuple
 
 class _Meta(dict):
     """
-    Class that interpret the return value(s) of a Callable as metadata,
-    what keys are expected and their types.
+    Class that interprets the return value(s) of a Callable as metadata.
+    Return values are mapped to metadata using a dictionary containing the
+    types of the return values keyed by the metadata key name.
     """
 
     def __init__(self, *args, **kwargs):
@@ -49,14 +50,14 @@ class _Meta(dict):
         wrong_types = [(k, t, type(result[k])) for k, t in self.items()
                        if not isinstance(result[k], t)]
         if wrong_types:
-            template = "key '{}' should be type {} but {} is returned"
+            template = "key '{}' should be type {} but {} was returned"
             msg = " and ".join(template.format(*t) for t in wrong_types)
             raise RuntimeError("Meta error: {}.".format(msg))
         return ((), result)
 
     def assert_is_superset(self, _type):
         """
-        Assert this instance is a superset of the give _type.
+        Assert this instance is a superset of the given _type.
 
         Parameters
         ----------

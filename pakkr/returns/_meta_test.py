@@ -49,14 +49,14 @@ def test_meta_wrong_types():
     with pytest.raises(RuntimeError) as e:
         m.parse_result({'x': "hello"})
     assert str(e.value) == \
-        "Meta error: key 'x' should be type <class 'int'> but <class 'str'> is returned."
+        "Meta error: key 'x' should be type <class 'int'> but <class 'str'> was returned."
 
     m = _Meta(x=int, y=str)
     with pytest.raises(RuntimeError) as e:
         m.parse_result({'x': "hello", 'y': 1})
     assert str(e.value) == \
-        ("Meta error: key 'x' should be type <class 'int'> but <class 'str'> is returned"
-         " and key 'y' should be type <class 'str'> but <class 'int'> is returned.")
+        ("Meta error: key 'x' should be type <class 'int'> but <class 'str'> was returned"
+         " and key 'y' should be type <class 'str'> but <class 'int'> was returned.")
 
 
 def test_meta_assert_is_superset():

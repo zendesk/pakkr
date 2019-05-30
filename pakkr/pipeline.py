@@ -3,6 +3,7 @@ import logging
 from functools import partial, reduce
 from inspect import getfullargspec
 from typing import Any, Callable
+from pakkr.cmd_args.cmd_args import ATTR_CMD_ARGS
 from pakkr.exception import (exception_handler,
                              exception_context,
                              PakkrError,
@@ -27,8 +28,12 @@ class Pipeline:
         super().__init__()
         self._meta = {}
         self._steps = steps
+
         self.__steps_returns = self._collect_steps_returns()
         self.__set_pakkr_returns(None)
+
+        self.__set_pakkr_cmd_args(self._add_steps_arguments)
+
         self._name = kwargs.pop("_name") if "_name" in kwargs else "unnamed_" + str(id(self))
 
     def __call__(self, *args, **meta):
@@ -134,6 +139,23 @@ class Pipeline:
         self.__custom_returns = _type
 
     __pakkr_returns__ = property(__get_pakkr_returns, __set_pakkr_returns)
+
+    def _add_steps_arguments(self, parser):
+        for step in self._steps:
+            if hasattr(step, ATTR_CMD_ARGS):
+                parser = getattr(step, ATTR_CMD_ARGS)(parser)
+        return parser
+
+    def __get_pakkr_cmd_args(self):
+        return self.__custom_cmd_args
+
+    def __set_pakkr_cmd_args(self, fn):
+        self.__custom_cmd_args = fn
+
+    __pakkr_cmd_args__ = property(__get_pakkr_cmd_args, __set_pakkr_cmd_args)
+
+    def add_arguments(self, parser):
+        return self.__pakkr_cmd_args__(parser)
 
 
 def _get_pakkr_stack(stack=None):

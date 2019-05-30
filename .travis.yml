@@ -6,7 +6,7 @@ env:
     - BOTO_CONFIG=/dev/null
     - PIPENV_IGNORE_VIRTUALENVS=1
   matrix:
-    - COMMAND="pytest --cov-report term-missing --cov=pakkr"
+    - COMMAND="pytest --cov-report term-missing --cov=pakkr --cov-fail-under=100"
 branches:
   only: [master]
 install:

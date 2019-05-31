@@ -1,0 +1,147 @@
+import pytest
+from pakkr import Pipeline, returns
+from pakkr.pipeline import _identifier
+from pakkr.exception import PakkrError
+
+
+def test_pipeline():
+    @returns(str)
+    def say_hello():
+        return "hello"
+
+    @returns(offset=int)
+    def meta_offset(s):
+        assert s == "hello"
+        return {'offset': 1}
+
+    @returns(int)
+    def count(s, offset):
+        return len(s) + offset
+
+    def with_world(offset):
+        return offset, "world"
+
+    @returns(str)
+    def second_item(tup):
+        return tup[1]
+
+    pipeline = Pipeline(say_hello, meta_offset)
+    assert pipeline() is None
+
+    pipeline = Pipeline(meta_offset, say_hello, count)
+    assert pipeline("hello") == 6
+
+    pipeline = Pipeline(meta_offset, say_hello, count, with_world)
+    assert pipeline("hello") == (6, "world")
+
+    pipeline = Pipeline(with_world, second_item)
+    assert pipeline(offset=1) == "world"
+
+
+def test_pipeline_step_exception():
+    def throw():
+        raise Exception("something is wrong")
+
+    pipeline = Pipeline(throw)
+    with pytest.raises(PakkrError) as e:
+        pipeline()
+    assert str(e.value).startswith("something is wrong")
+
+
+def test_nested_pipeline():
+    inner_step = returns(str, a=bool)(lambda i: ("inner_" + str(i), {'a': True}))
+    inner_pipeline = Pipeline(inner_step)
+
+    def outer_step(s, a, x=0):
+        return (not a, s[::-1], x)
+
+    outer_pipeline = Pipeline(inner_pipeline, outer_step)
+
+    assert outer_pipeline(100, x=-1) == (False, "001_renni", -1)
+
+
+def test_nested_pipeline_step_exception():
+    def throw():
+        raise Exception("something is wrong")
+
+    pipeline = Pipeline(Pipeline(throw))
+    with pytest.raises(PakkrError) as e:
+        pipeline()
+    assert str(e.value).startswith("something is wrong")
+
+
+def test_downcast_pipeline():
+    def missing_x(x):
+        return "should not work"  # pragma: no cover
+
+    def say_hello(y):
+        return "hello and y = " + y
+
+    @returns(bool, x=int, y=str)
+    def blah():
+        return True, {"x": 1, "y": "abc"}
+
+    inner_pipeline = Pipeline(blah)
+    assert inner_pipeline() is True
+
+    downcasted_pipeline = returns(y=str)(inner_pipeline)
+
+    pipeline = Pipeline(downcasted_pipeline, say_hello)
+    assert pipeline() == "hello and y = abc"
+
+    pipeline = Pipeline(downcasted_pipeline, say_hello)
+    assert pipeline() == "hello and y = abc"
+
+    pipeline = Pipeline(downcasted_pipeline, missing_x)
+    with pytest.raises(Exception) as e:
+        pipeline()
+    assert type(e.value.__cause__) == RuntimeError
+    assert str(e.value.__cause__).startswith("'x' is required but not available.")
+
+    downcasted_pipeline = returns()(inner_pipeline)
+    pipeline = Pipeline(downcasted_pipeline, lambda: "hello")
+    assert pipeline() == "hello"
+
+
+def test_step_class():
+    @returns(str, a=bool)
+    class Step:
+        def __call__(self, x):
+            return str(x), {'a': False}
+
+    pipeline = Pipeline(Step())
+    assert pipeline(x=100) == "100"
+
+
+def test_no_return():
+    pipeline = returns()(Pipeline(lambda: "hello"))
+    assert pipeline() is None
+
+    pipeline = returns()(Pipeline(returns(x=int)(lambda: {'x': 1})))
+    assert pipeline() is None
+
+
+def test_identifier_name():
+    class PrivateName:
+        def __init__(self, _name):
+            super().__init__()
+            self._name = _name
+
+    private_name = PrivateName(_name="secret_name")
+    assert _identifier(private_name) == '"secret_name"<PrivateName>'
+
+
+def test_identifier_attr():
+    pipeline = Pipeline(lambda: 1, _name="cool_pipeline")
+    assert _identifier(pipeline) == '"cool_pipeline"<Pipeline>'
+
+
+def test_identifier__name():
+    def normal_func():
+        pass  # pragma: no cover
+    assert _identifier(normal_func) == '"normal_func"<function>'
+
+
+def test_identifier_unnamed():
+    d = dict()
+    assert _identifier(d) == '"unnamed_{}"<dict>'.format(id(d))

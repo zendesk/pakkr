@@ -103,7 +103,7 @@ def test_downcast_pipeline():
     assert pipeline() == "hello"
 
 
-def test_step_class():
+def test_step_instance_method():
     @returns(str, a=bool)
     class Step:
         def __call__(self, x):
@@ -111,6 +111,59 @@ def test_step_class():
 
     pipeline = Pipeline(Step())
     assert pipeline(x=100) == "100"
+    assert pipeline(100) == "100"
+
+    class Step:
+        @returns(str, a=bool)
+        def some_func(self, x):
+            return str(x), {'a': False}
+
+    pipeline = Pipeline(Step().some_func)
+    assert pipeline(x=100) == "100"
+    assert pipeline(100) == "100"
+
+def test_step_class_method():
+    @returns(str, a=bool)
+    class Step:
+        @classmethod
+        def __call__(cls, x):
+            return str(x), {'a': False}
+
+    pipeline = Pipeline(Step())
+    assert pipeline(x=100) == "100"
+    assert pipeline(100) == "100"
+
+    class Step:
+        @classmethod
+        @returns(str, a=bool)
+        def some_func(cls, x):
+            return str(x), {'a': False}
+
+    pipeline = Pipeline(Step.some_func)
+    assert pipeline(x=100) == "100"
+    assert pipeline(100) == "100"
+
+
+def test_step_static_method():
+    @returns(str, a=bool)
+    class Step:
+        @staticmethod
+        def __call__(x):
+            return str(x), {'a': False}
+
+    pipeline = Pipeline(Step())
+    assert pipeline(x=100) == "100"
+    assert pipeline(100) == "100"
+
+    class Step:
+        @staticmethod
+        @returns(str, a=bool)
+        def some_func(x):
+            return str(x), {'a': False}
+
+    pipeline = Pipeline(Step.some_func)
+    assert pipeline(x=100) == "100"
+    assert pipeline(100) == "100"
 
 
 def test_no_return():

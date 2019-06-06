@@ -77,8 +77,11 @@ class Pipeline:
                                                    'identifier': _identifier(step)})
         kwargs.update(logger=logger)
 
+        # to handle instance/class bound methods
+        skip_self = int((argspec.args or False) and
+                        (hasattr(step, '__func__') or hasattr(step.__call__, '__func__')))
         try:
-            opts = {key: kwargs[key] for key in argspec.args[len(args):] if key != 'self'}
+            opts = {key: kwargs[key] for key in argspec.args[skip_self + len(args):]}
         except KeyError as e:
             context = '\twhen executing {identifier}, available inputs/meta were {args}/{kwargs}'
             context = context.format(identifier=_identifier(step),

@@ -24,28 +24,14 @@ def test_add_arguments():
     mock_parser.add_argument.assert_has_calls([call('--config'), call('--test')])
 
 
-def test_chained():
-    @cmd_args(argument('--config'), chain=True)
-    @cmd_args(argument('--test'))
-    def fn(config, test):
-        return 'hello'
+def test_double_decorated():
+    with pytest.raises(RuntimeError) as e:
+        @cmd_args(argument('--config'))
+        @cmd_args(argument('--test'))
+        def fn(config, test):
+            return 'hello'  # pragma: no cover
 
-    assert fn(1, 2) == 'hello'
-    mock_parser = MagicMock()
-    assert getattr(fn, ATTR_CMD_ARGS)(mock_parser) == mock_parser
-    mock_parser.add_argument.assert_has_calls([call('--config'), call('--test')])
-
-
-def test_not_chained():
-    @cmd_args(argument('--config'))
-    @cmd_args(argument('--test'))
-    def fn(config, test):
-        return 'hello'
-
-    assert fn(1, 2) == 'hello'
-    mock_parser = MagicMock()
-    assert getattr(fn, ATTR_CMD_ARGS)(mock_parser) == mock_parser
-    mock_parser.add_argument.assert_called_once_with('--config')
+    assert str(e.value).startswith('__pakkr_cmd_args__ has been set on ')
 
 
 def test_argument_mismatch():
@@ -53,7 +39,7 @@ def test_argument_mismatch():
         @cmd_args(argument('--x'))
         def fn():
             return 'hello'  # pragma: no cover
-    assert str(e.value) == "'x' is not a positional or keyword argument of the Callable."
+    assert str(e.value) == "'x' is not an argument of the Callable."
 
     with pytest.raises(RuntimeError) as e:
         @cmd_args(argument('--x'))

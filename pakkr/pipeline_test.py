@@ -1,5 +1,8 @@
 import pytest
+from mock import call, MagicMock
 from pakkr import Pipeline, returns
+from pakkr.cmd_args.cmd_args import cmd_args
+from pakkr.cmd_args.argument import argument
 from pakkr.pipeline import _identifier
 from pakkr.exception import PakkrError
 
@@ -198,3 +201,17 @@ def test_identifier__name():
 def test_identifier_unnamed():
     d = dict()
     assert _identifier(d) == '"unnamed_{}"<dict>'.format(id(d))
+
+
+def test_add_arguments():
+    @cmd_args(argument('--config'))
+    def test(config):
+        return f'config: {config}'
+
+    pipeline = Pipeline(test)
+    mock_parser = MagicMock()
+    parser = pipeline.add_arguments(mock_parser)
+    assert parser is mock_parser
+    mock_parser.add_argument.assert_called_once_with('--config')
+    result = pipeline(config='some_file')
+    assert result == 'config: some_file'

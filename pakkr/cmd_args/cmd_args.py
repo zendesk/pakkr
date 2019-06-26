@@ -34,7 +34,11 @@ def cmd_args(*arguments: _Argument) -> Any:
             raise RuntimeError(f'{ATTR_CMD_ARGS} has been set on {obj} already')
         _add_arguments = _add_arguments_factory(arguments)
         _verify_arguments(_add_arguments, obj)
-        setattr(obj, ATTR_CMD_ARGS, _add_arguments)
+        if isinstance(obj, type):
+            fn = lambda self, parser: _add_arguments(parser)
+        else:
+            fn = _add_arguments
+        setattr(obj, ATTR_CMD_ARGS, fn)
         return obj
     return decorate
 
@@ -42,7 +46,7 @@ def cmd_args(*arguments: _Argument) -> Any:
 def _verify_arguments(add_arguments, obj):
     parser = ArgumentParser(add_help=False)
     parser = add_arguments(parser)
-    params = signature(obj).parameters
+    params = signature(obj.__call__ if isinstance(obj, type) else obj).parameters
     for action in parser._actions:
         if action.dest not in params:
             raise RuntimeError(f"'{action.dest}' is not an argument of the Callable.")

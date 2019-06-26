@@ -13,6 +13,17 @@ def test_add_attribute():
     assert fn(1) == 'hello'
 
 
+def test_add_attribute_to_class():
+    @cmd_args(argument('--x'))
+    class Test:
+        def __call__(self, x):
+            return 'hello'
+
+    test = Test()
+    assert hasattr(test, ATTR_CMD_ARGS)
+    assert test(1) == 'hello'
+
+
 def test_add_arguments():
     @cmd_args(argument('--config'), argument('--test'))
     def fn(config, test):
@@ -21,6 +32,19 @@ def test_add_arguments():
     assert fn(1, 2) == 'hello'
     mock_parser = MagicMock()
     assert getattr(fn, ATTR_CMD_ARGS)(mock_parser) == mock_parser
+    mock_parser.add_argument.assert_has_calls([call('--config'), call('--test')])
+
+
+def test_add_arguments_class():
+    @cmd_args(argument('--config'), argument('--test'))
+    class Test:
+        def __call__(self, config, test):
+            return 'hello'
+
+    test = Test()
+    assert test(1, 2) == 'hello'
+    mock_parser = MagicMock()
+    assert getattr(test, ATTR_CMD_ARGS)(mock_parser) == mock_parser
     mock_parser.add_argument.assert_has_calls([call('--config'), call('--test')])
 
 

@@ -1,7 +1,7 @@
 import inspect
 import logging
 from functools import partial, reduce
-from inspect import getfullargspec
+from inspect import getfullargspec, Parameter as iParameter, signature
 from typing import Any, Callable
 from pakkr.cmd_args.cmd_args import ATTR_CMD_ARGS
 from pakkr.exception import (exception_handler,
@@ -73,30 +73,33 @@ class Pipeline:
         assert isinstance(step, Callable)
 
         args, meta = args_meta
+        available = meta.copy()
 
-        argspec = getfullargspec(step)
+        sign = signature(step)
+        sign_params = tuple(sign.parameters.values())
 
-        kwargs = dict(zip(argspec.args[::-1], argspec.defaults or []))
-        kwargs.update(meta)
         logger = IndentationAdapter(pakkr_logger, {'indent': indent,
                                                    'identifier': _identifier(step)})
-        kwargs.update(logger=logger)
+        available.update(logger=logger)
 
-        # to handle instance/class bound methods
-        skip_self = int((argspec.args or False) and
-                        (hasattr(step, '__func__') or hasattr(step.__call__, '__func__')))
         try:
-            opts = {key: kwargs[key] for key in argspec.args[skip_self + len(args):]}
+            opts = {}
+            for param in sign_params[len(args):]:
+                if param.kind == iParameter.VAR_POSITIONAL:
+                    pass
+                elif param.kind == iParameter.VAR_KEYWORD and param.name == 'meta':
+                    opts.update(available)
+                elif param.default != iParameter.empty:
+                    opts[param.name] = available.get(param.name, param.default)
+                else:
+                    opts[param.name] = available[param.name]
         except KeyError as e:
-            context = '\twhen executing {identifier}, available inputs/meta were {args}/{kwargs}'
+            context = '\twhen executing {identifier}, available inputs/meta were {args}/{available}'
             context = context.format(identifier=_identifier(step),
                                      args=tuple(map(type, args)),
-                                     kwargs=summarise_dictionary(kwargs))
+                                     available=summarise_dictionary(available))
             msg = "{} is required but not available.".format(str(e))
             raise PakkrError(msg, context) from RuntimeError(msg)
-
-        if argspec.varkw == 'meta':
-            opts.update(kwargs)
 
         try:
             with log_timing(logger):

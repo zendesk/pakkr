@@ -126,16 +126,6 @@ def test_step_instance_method():
     assert pipeline(100) == "100"
 
 def test_step_class_method():
-    @returns(str, a=bool)
-    class Step:
-        @classmethod
-        def __call__(cls, x):
-            return str(x), {'a': False}
-
-    pipeline = Pipeline(Step())
-    assert pipeline(x=100) == "100"
-    assert pipeline(100) == "100"
-
     class Step:
         @classmethod
         @returns(str, a=bool)
@@ -148,16 +138,6 @@ def test_step_class_method():
 
 
 def test_step_static_method():
-    @returns(str, a=bool)
-    class Step:
-        @staticmethod
-        def __call__(x):
-            return str(x), {'a': False}
-
-    pipeline = Pipeline(Step())
-    assert pipeline(x=100) == "100"
-    assert pipeline(100) == "100"
-
     class Step:
         @staticmethod
         @returns(str, a=bool)

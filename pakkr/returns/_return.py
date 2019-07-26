@@ -18,7 +18,7 @@ class _Return:
                 raise RuntimeError("'values' and 'meta' are empty, use _NoReturn instead.")
 
         if meta:
-            assert isinstance(meta, _Meta)
+            assert isinstance(meta, _Meta), f"meta '{meta}' is not an instance of _Meta"
 
         super().__init__()
         self.values = tuple(values)
@@ -47,7 +47,7 @@ class _Return:
             when mis-match in shape or type
         """
         if len(self._types) > 1:
-            assert isinstance(result, Tuple)
+            assert isinstance(result, Tuple), f"Returned value '{result}' is not an instance of Tuple"
             if len(result) != len(self._types):
                 raise RuntimeError("Expecting {} values, but only {} were returned."
                                    .format(len(self._types), len(result)))
@@ -130,7 +130,7 @@ class _Return:
             when mis-match in shape or type, or ambigous conversion
         """
 
-        assert result and isinstance(result, Iterable)
+        assert result and isinstance(result, Tuple), f"Value '{result}' is not an instance of Tuple"
         values = result[0]
         if self.values and len(self.values) != len(values):
             raise RuntimeError("Cannot downcast {} to {}".format(values, self.values))

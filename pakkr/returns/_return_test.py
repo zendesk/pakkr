@@ -33,6 +33,10 @@ def test_return_parse_result():
     r = _Return([int, str], _Meta(x=bool))
     assert r.parse_result((1, "hello", {"x": False})) == ((1, "hello"), {"x": False})
 
+    with pytest.raises(AssertionError) as e:
+        r.parse_result(1)
+    assert str(e.value) == "Returned value '1' is not an instance of Tuple"
+
     with pytest.raises(RuntimeError) as e:
         r.parse_result((1, {'x': True}))
     assert str(e.value) == "Expecting 3 values, but only 2 were returned."
@@ -80,6 +84,10 @@ def test_return_downcast_result():
 
     r = _Return([int, str], _Meta(x=bool))
     assert r.downcast_result(([1, 'hello'], {'x': True, 'y': 1})) == ([1, 'hello'], {'x': True})
+
+    with pytest.raises(AssertionError) as e:
+        r.downcast_result(1)
+    assert str(e.value) == "Value '1' is not an instance of Tuple"
 
     with pytest.raises(RuntimeError) as e:
         r.downcast_result(([1], {'x': True}))

@@ -35,6 +35,7 @@ class Pipeline:
         self.__set_pakkr_cmd_args(self._add_steps_arguments)
 
         self._name = kwargs.pop("_name") if "_name" in kwargs else "unnamed_" + str(id(self))
+        self._suppress_timing_logs = "_suppress_timing_logs" in kwargs and bool(kwargs.pop("_suppress_timing_logs"))
 
     def __call__(self, *args, **meta):
         kwargs = meta.copy()  # shallow copy the original keyword arguments for error msg
@@ -44,7 +45,7 @@ class Pipeline:
         self._meta = {}
 
         try:
-            with log_timing(logger):
+            with log_timing(logger, self._suppress_timing_logs):
                 partial_run_step = partial(self._run_step, indent=len(stack))
                 new_arg, _ = reduce(partial_run_step, self._steps, (args, meta))
                 new_arg, new_meta = self._filter_results((new_arg, self._meta))
@@ -102,7 +103,8 @@ class Pipeline:
             raise PakkrError(msg, context) from RuntimeError(msg)
 
         try:
-            with log_timing(logger):
+            suppress_timing_logs = self._suppress_timing_logs or isinstance(step, Pipeline)
+            with log_timing(logger, suppress_timing_logs):
                 result = step(*args, **opts)
         except PakkrError as e:
             raise e

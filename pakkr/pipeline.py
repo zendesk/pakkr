@@ -39,22 +39,21 @@ class Pipeline:
 
     def __call__(self, *args, **meta):
         kwargs = meta.copy()  # shallow copy the original keyword arguments for error msg
-        stack = _get_pakkr_stack()  # calling this here will guarantee to have at least one item
-        logger = IndentationAdapter(pakkr_logger, {'indent': len(stack) - 1,
+        depth, return_meta = _get_pakkr_depth(self)
+        logger = IndentationAdapter(pakkr_logger, {'indent': depth,
                                                    'identifier': _identifier(self)})
         self._meta = {}
 
         try:
             with log_timing(logger, self._suppress_timing_logs):
-                partial_run_step = partial(self._run_step, indent=len(stack))
+                partial_run_step = partial(self._run_step, indent=depth + 1)
                 new_arg, _ = reduce(partial_run_step, self._steps, (args, meta))
                 new_arg, new_meta = self._filter_results((new_arg, self._meta))
         except PakkrError as e:
             with exception_handler(pakkr_exchandler):
                 raise e.append_stack(exception_context(_identifier(self), args, kwargs, None))
 
-        if len(stack) > 1:
-            # if this pipeline is nested, we should return values as if this were a Callable
+        if return_meta:
             if new_arg:
                 return tuple(new_arg) + (new_meta,)
             else:
@@ -163,20 +162,30 @@ class Pipeline:
         return self.__pakkr_cmd_args__(parser)
 
 
-def _get_pakkr_stack(stack=None):
-    '''Get the sequence of running Pakkr Pipeline from the call stack.
-    The call stack will contains all calling functions so we need to filter on
+def _get_pakkr_depth(instance):
+    '''Calculate how deeply the given Pipeline instance is nested.
+    The call stack (LIFO) will contains all calling functions so we need to filter on
     frames that are executing functions belonging to Pipeline instances which is
     accessible via frame.f_locals['self'].
-    Also the call stack is LIFO, so the sequence need to be reversed.
+    Also need to differiate pipelines being used as steps of another pipeline v.s.
+    used as Callables inside a step; meta should be returned in the former but not
+    the later.
     '''
-    stack = stack or inspect.stack()
+    assert isinstance(instance, Pipeline), f"'{instance}' is not an instance of Pipeline"
+    stack = inspect.stack()
 
-    return [frame.f_locals['self']
-            for (frame, _, _, func_name, _, _) in stack[::-1]
-            if func_name == '__call__' and
-            'self' in frame.f_locals and
-            isinstance(frame.f_locals['self'], Pipeline)]
+    used_as_step = None
+    count = -1
+    for frame_info in stack:
+
+        obj = frame_info.frame.f_locals.get('self', None)
+        if obj is instance:
+            count = 0
+            continue
+        if count == 0 and used_as_step is None:
+            used_as_step = isinstance(obj, Pipeline)
+        count += isinstance(obj, Pipeline) and frame_info.function == '__call__'
+    return count, used_as_step
 
 
 def _identifier(obj):

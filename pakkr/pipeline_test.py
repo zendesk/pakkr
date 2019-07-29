@@ -73,6 +73,23 @@ def test_nested_pipeline_step_exception():
     assert str(e.value).startswith("something is wrong")
 
 
+def test_calling_pipeline_inside_a_step():
+    @returns(int, x=str)
+    def inner_step():
+        return 1, {'x': 'hello'}
+
+    callable = Pipeline(inner_step)
+
+    @returns(int)
+    def use_callable():
+        result = callable()
+        assert result == 1
+        return result
+
+    pipeline = Pipeline(use_callable)
+    assert pipeline() == 1
+
+
 def test_downcast_pipeline():
     def missing_x(x):
         return "should not work"  # pragma: no cover

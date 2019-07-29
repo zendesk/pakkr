@@ -20,3 +20,12 @@ def test_log_timing(mock_time):
 
     mock_step.run.assert_called_with(x=1)
     mock_logger.info.assert_has_calls([call("starting"), call("finished (took 8.000s)")])
+
+
+def test_log_timing_suppressed():
+    mock_logger = MagicMock()
+    mock_step = MagicMock()
+    with log_timing(mock_logger, True):
+        mock_step.run(x=1)
+    mock_step.run.assert_called_with(x=1)
+    mock_logger.assert_not_called()

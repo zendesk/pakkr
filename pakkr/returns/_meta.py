@@ -15,7 +15,7 @@ class _Meta(dict):
         super().__init__(*args, **kwargs)
 
         for value in kwargs.values():
-            assert isinstance(value, type)
+            assert isinstance(value, type), f"Value '{value}' is not a type"
 
     def parse_result(self, result: Dict) -> Tuple[Tuple, Dict]:
         """
@@ -36,7 +36,7 @@ class _Meta(dict):
         RuntimeError
             when missing or extra keys or mis-match in expected types
         """
-        assert isinstance(result, Dict)
+        assert isinstance(result, Dict), f"Meta should be a dictionary not {type(result)}"
         this_keys = set(self.keys())
         that_keys = set(result.keys())
         missing = this_keys - that_keys
@@ -102,7 +102,7 @@ class _Meta(dict):
             when mis-match in shape or type, or ambigous conversion
         """
         result = result[1]
-        assert isinstance(result, Dict)
+        assert isinstance(result, Dict), f"Meta should be a dictionary not {type(result)}"
 
         meta = {}
         for key, _type in self.items():

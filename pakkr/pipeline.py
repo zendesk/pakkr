@@ -45,7 +45,7 @@ class Pipeline:
 
         try:
             with log_timing(logger):
-                partial_run_step = partial(self._run_step, indent=len(stack))
+                partial_run_step = partial(self._run_step, indent=depth)
                 new_arg, _ = reduce(partial_run_step, self._steps, (args, meta))
                 new_arg, new_meta = self._filter_results((new_arg, self._meta))
         except PakkrError as e:
@@ -175,7 +175,6 @@ def _get_pakkr_depth(instance):
     used_as_step = None
     count = -1
     for frame_info in stack:
-
         obj = frame_info.frame.f_locals.get('self', None)
         if obj is instance:
             count = 0

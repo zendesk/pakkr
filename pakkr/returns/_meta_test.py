@@ -17,6 +17,12 @@ def test_meta_empty():
     assert str(e.value) == "No meta key/type given."
 
 
+def test_meta_value_not_type():
+    with pytest.raises(AssertionError) as e:
+        _Meta(x=1)
+    assert str(e.value) == "Value '1' is not a type"
+
+
 def test_meta_parse_result():
     m = _Meta(x=int, y=str)
     assert m == {'x': int, 'y': str}
@@ -28,6 +34,13 @@ def test_meta_missing_kwargs():
     with pytest.raises(RuntimeError) as e:
         m.parse_result({})
     assert str(e.value) == "Missing meta keys {'x'}."
+
+
+def test_meta_parse_not_dict():
+    m = _Meta(x=int)
+    with pytest.raises(AssertionError) as e:
+        m.parse_result((1,))
+    assert str(e.value) == "Meta should be a dictionary not <class 'tuple'>"
 
 
 def test_meta_extra_kwargs():
@@ -89,8 +102,9 @@ def test_meta_downcast_result():
         m.downcast_result(((), {'y': 1, 'z': 'hello'}))
     assert str(e.value) == "Key 'x' does not exist in {'y': 1, 'z': 'hello'}"
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(AssertionError) as e:
         m.downcast_result(((), "abc"))
+    assert str(e.value) == "Meta should be a dictionary not <class 'str'>"
 
     with pytest.raises(RuntimeError) as e:
         m.downcast_result(((), {'x': 'hello'}))

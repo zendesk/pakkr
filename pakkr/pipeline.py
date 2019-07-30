@@ -178,12 +178,17 @@ def _get_pakkr_depth(instance):
     count = -1
     for frame_info in stack:
         obj = frame_info.frame.f_locals.get('self', None)
-        if obj is instance:
+
+        if obj is instance and frame_info.function == '__call__':
             count = 0
             continue
+
         if count == 0 and used_as_step is None:
             used_as_step = isinstance(obj, Pipeline)
-        count += isinstance(obj, Pipeline) and frame_info.function == '__call__'
+
+        if count > -1:
+            count += isinstance(obj, Pipeline) and frame_info.function == '__call__'
+
     return count, used_as_step
 
 

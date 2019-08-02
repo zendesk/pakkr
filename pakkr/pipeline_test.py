@@ -1,10 +1,15 @@
 import pytest
-from mock import call, MagicMock
+from mock import call, MagicMock, Mock, patch
 from pakkr import Pipeline, returns
 from pakkr.cmd_args.cmd_args import cmd_args
 from pakkr.cmd_args.argument import argument
-from pakkr.pipeline import _identifier
+from pakkr.pipeline import _identifier, _get_pakkr_depth
 from pakkr.exception import PakkrError
+from collections import namedtuple
+
+
+_FrameInfo = namedtuple('_FrameInfo', ('frame', 'function'))
+_Frame = namedtuple('_Frame', ('f_locals'))
 
 
 def test_pipeline():
@@ -212,3 +217,121 @@ def test_add_arguments():
     mock_parser.add_argument.assert_called_once_with('--config')
     result = pipeline(config='some_file')
     assert result == 'config: some_file'
+
+
+@patch('pakkr.pipeline.inspect')
+def test_get_pakkr_depth_0(mock_inspect):
+    pipeline_1 = Mock(spec=Pipeline)
+
+    mock_stack = [_FrameInfo(_Frame({'self': pipeline_1}), '__call__'),
+                  _FrameInfo(_Frame({}), 'some_external_func_1'),
+                  _FrameInfo(_Frame({'self': Mock()}), 'some_method'),
+                  _FrameInfo(_Frame({}), 'some_external_func_2')]
+    mock_inspect.stack.return_value = mock_stack
+    depth, used_as_step = _get_pakkr_depth(pipeline_1)
+    assert depth == 0
+    assert used_as_step is False
+
+
+@patch('pakkr.pipeline.inspect')
+def test_get_pakkr_depth_2_as_step(mock_inspect):
+    pipeline_1 = Mock(spec=Pipeline)
+    pipeline_2 = Mock(spec=Pipeline)
+    pipeline_3 = Mock(spec=Pipeline)
+
+    mock_stack = [_FrameInfo(_Frame({'self': pipeline_1}), '__call__'),
+                  _FrameInfo(_Frame({'self': pipeline_2}), '_run_step'),
+                  _FrameInfo(_Frame({'self': pipeline_2}), '__call__'),
+                  _FrameInfo(_Frame({'self': pipeline_3}), '_run_step'),
+                  _FrameInfo(_Frame({'self': pipeline_3}), '__call__'),
+                  _FrameInfo(_Frame({}), 'some_external_func_1')]
+    mock_inspect.stack.return_value = mock_stack
+
+    depth, used_as_step = _get_pakkr_depth(pipeline_1)
+    assert depth == 2
+    assert used_as_step is True
+
+
+@patch('pakkr.pipeline.inspect')
+def test_get_pakkr_depth_1_as_callable(mock_inspect):
+    pipeline_1 = Mock(spec=Pipeline)
+    pipeline_2 = Mock(spec=Pipeline)
+
+    mock_stack = [_FrameInfo(_Frame({'self': pipeline_1}), '__call__'),
+                  _FrameInfo(_Frame({}), 'some_external_func_1'),
+                  _FrameInfo(_Frame({'self': pipeline_2}), '_run_step'),
+                  _FrameInfo(_Frame({'self': pipeline_2}), '__call__'),
+                  _FrameInfo(_Frame({}), 'some_external_func_2')]
+    mock_inspect.stack.return_value = mock_stack
+
+    depth, used_as_step = _get_pakkr_depth(pipeline_1)
+    assert depth == 1
+    assert used_as_step is False
+
+
+@patch('pakkr.pipeline.inspect')
+def test_get_pakkr_depth_not_found_no_pipeline(mock_inspect):
+    pipeline_1 = Mock(spec=Pipeline)
+
+    mock_stack = [_FrameInfo(_Frame({}), 'some_external_func_1'),
+                  _FrameInfo(_Frame({}), 'some_external_func_2')]
+    mock_inspect.stack.return_value = mock_stack
+
+    depth, used_as_step = _get_pakkr_depth(pipeline_1)
+    assert depth == -1
+    assert used_as_step is None
+
+
+@patch('pakkr.pipeline.inspect')
+def test_get_pakkr_depth_not_found_with_pipeline(mock_inspect):
+    pipeline_1 = Mock(spec=Pipeline)
+    pipeline_2 = Mock(spec=Pipeline)
+
+    mock_stack = [_FrameInfo(_Frame({}), 'some_external_func_1'),
+                  _FrameInfo(_Frame({}), 'some_external_func_2'),
+                  _FrameInfo(_Frame({'self': pipeline_2}), '_run_step'),
+                  _FrameInfo(_Frame({'self': pipeline_2}), '__call__')]
+    mock_inspect.stack.return_value = mock_stack
+
+    depth, used_as_step = _get_pakkr_depth(pipeline_1)
+    assert depth == -1
+    assert used_as_step is None
+
+
+@patch('pakkr.pipeline.inspect')
+def test_get_pakkr_depth_1_as_step_in_between(mock_inspect):
+    pipeline_1 = Mock(spec=Pipeline)
+    pipeline_2 = Mock(spec=Pipeline)
+    pipeline_3 = Mock(spec=Pipeline)
+
+    mock_stack = [_FrameInfo(_Frame({'self': pipeline_1}), '__call__'),
+                  _FrameInfo(_Frame({'self': pipeline_2}), '_run_step'),
+                  _FrameInfo(_Frame({'self': pipeline_2}), '__call__'),
+                  _FrameInfo(_Frame({'self': pipeline_3}), '_run_step'),
+                  _FrameInfo(_Frame({'self': pipeline_3}), '__call__'),
+                  _FrameInfo(_Frame({}), 'some_external_func_1')]
+    mock_inspect.stack.return_value = mock_stack
+
+    depth, used_as_step = _get_pakkr_depth(pipeline_2)
+    assert depth == 1
+    assert used_as_step is True
+
+
+@patch('pakkr.pipeline.inspect')
+def test_get_pakkr_depth_1_as_callable_in_between(mock_inspect):
+    pipeline_1 = Mock(spec=Pipeline)
+    pipeline_2 = Mock(spec=Pipeline)
+    pipeline_3 = Mock(spec=Pipeline)
+
+    mock_stack = [_FrameInfo(_Frame({'self': pipeline_1}), '__call__'),
+                  _FrameInfo(_Frame({'self': pipeline_2}), '_run_step'),
+                  _FrameInfo(_Frame({'self': pipeline_2}), '__call__'),
+                  _FrameInfo(_Frame({}), 'some_external_func_1'),
+                  _FrameInfo(_Frame({'self': pipeline_3}), '_run_step'),
+                  _FrameInfo(_Frame({'self': pipeline_3}), '__call__'),
+                  _FrameInfo(_Frame({}), 'some_external_func_2')]
+    mock_inspect.stack.return_value = mock_stack
+
+    depth, used_as_step = _get_pakkr_depth(pipeline_2)
+    assert depth == 1
+    assert used_as_step is False

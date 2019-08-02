@@ -146,7 +146,7 @@ class _Return:
         if self.meta:
             _, new_meta = self.meta.downcast_result(result)
 
-        return new_values, new_meta
+        return tuple(new_values), new_meta
 
     def __repr__(self):
         return "({}, {})".format(self.values, self.meta)

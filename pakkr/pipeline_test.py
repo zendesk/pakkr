@@ -58,12 +58,12 @@ def test_pipeline_step_exception():
 
 def test_nested_pipeline():
     inner_step = returns(str, a=bool)(lambda i: ("inner_" + str(i), {'a': True}))
-    inner_pipeline = Pipeline(inner_step)
+    inner_pipeline = Pipeline(inner_step, _name="inner_pipeline")
 
     def outer_step(s, a, x=0):
         return (not a, s[::-1], x)
 
-    outer_pipeline = Pipeline(inner_pipeline, outer_step)
+    outer_pipeline = Pipeline(inner_pipeline, outer_step, _name="outer_pipeline")
 
     assert outer_pipeline(100, x=-1) == (False, "001_renni", -1)
 
@@ -114,9 +114,6 @@ def test_downcast_pipeline():
     pipeline = Pipeline(downcasted_pipeline, say_hello)
     assert pipeline() == "hello and y = abc"
 
-    pipeline = Pipeline(downcasted_pipeline, say_hello)
-    assert pipeline() == "hello and y = abc"
-
     pipeline = Pipeline(downcasted_pipeline, missing_x)
     with pytest.raises(Exception) as e:
         pipeline()
@@ -126,6 +123,10 @@ def test_downcast_pipeline():
     downcasted_pipeline = returns()(inner_pipeline)
     pipeline = Pipeline(downcasted_pipeline, lambda: "hello")
     assert pipeline() == "hello"
+
+    downcasted_pipeline = returns(bool)(inner_pipeline)
+    pipeline = Pipeline(downcasted_pipeline, lambda x: not x)
+    assert pipeline() == False
 
 
 def test_step_instance_method():

@@ -79,11 +79,11 @@ def test_return_assert_is_superset():
 
 def test_return_downcast_result():
     r = _Return([int], None)
-    assert r.downcast_result(([1], None)) == ([1], None)
-    assert r.downcast_result(([1], {'x': 1})) == ([1], None)
+    assert r.downcast_result(([1], None)) == ((1,), None)
+    assert r.downcast_result(([1], {'x': 1})) == ((1,), None)
 
     r = _Return([int, str], _Meta(x=bool))
-    assert r.downcast_result(([1, 'hello'], {'x': True, 'y': 1})) == ([1, 'hello'], {'x': True})
+    assert r.downcast_result(([1, 'hello'], {'x': True, 'y': 1})) == ((1, 'hello'), {'x': True})
 
     with pytest.raises(AssertionError) as e:
         r.downcast_result(1)

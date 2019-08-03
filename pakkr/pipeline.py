@@ -53,7 +53,7 @@ class Pipeline:
             with exception_handler(pakkr_exchandler):
                 raise e.append_stack(exception_context(_identifier(self), args, kwargs, None))
 
-        if return_meta:
+        if return_meta and new_meta is not None:
             if new_arg:
                 return tuple(new_arg) + (new_meta,)
             else:
@@ -117,7 +117,7 @@ class Pipeline:
             returns = getattr(step, ATTR_RETURNS)
             result, new_meta = returns.parse_result(result)
         else:
-            result = [result]
+            result = (result,)
 
         self._meta.update(new_meta)
         meta.update(new_meta)

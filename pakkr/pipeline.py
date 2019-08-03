@@ -46,7 +46,7 @@ class Pipeline:
 
         try:
             with log_timing(logger, self._suppress_timing_logs):
-                partial_run_step = partial(self._run_step, indent=depth)
+                partial_run_step = partial(self._run_step, indent=depth + 1)
                 new_arg, _ = reduce(partial_run_step, self._steps, (args, meta))
                 new_arg, new_meta = self._filter_results((new_arg, self._meta))
         except PakkrError as e:

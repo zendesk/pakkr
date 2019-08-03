@@ -46,6 +46,17 @@ def test_pipeline():
     assert pipeline(offset=1) == "world"
 
 
+def test_pipeline_run_step():
+    def say_hello():
+        return "hello"
+
+    pipeline = Pipeline(say_hello)
+
+    with patch.object(pipeline, '_run_step', wraps=pipeline._run_step) as spy:
+        pipeline()
+        spy.assert_called_with(((), {}), say_hello, indent=1)
+
+
 def test_pipeline_step_exception():
     def throw():
         raise Exception("something is wrong")

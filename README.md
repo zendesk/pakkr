@@ -2,9 +2,9 @@
 Python pipeline utility library
 
 # Description
-In the process of building machine learning things at Zendesk, we have noticed that a lot of the steps are sequential where later steps rely on outputs of previous steps. Because Python functions only return a single value (`return` with multiple values are returned as a tuple), deconstructing and keeping track of return values become tedious for long sequences of steps, especially when inputs are not from the immediate previous step.
+In the process of building machine learning things at Zendesk, we have noticed that a lot of the steps are sequential where later steps rely on outputs of previous steps. Because Python functions only return a single value (`return` with multiple values are returned as a tuple), deconstructing and keeping track of return values becomes tedious for long sequences of steps, especially when inputs are not returned from the immediately previous step.
 
-PAKKR is an utility created to remediate these pain points; it provides user a way to specify how return values should be interpreted and optionally cache results and injected in later steps automatically.
+PAKKR is an utility created to remediate these pain points; it provides the user with a way to specify how return values should be interpreted and optionally caches results and injects them in later steps automatically.
 
 # Install from PyPi
 Coming soon.

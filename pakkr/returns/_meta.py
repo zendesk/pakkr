@@ -1,3 +1,4 @@
+import typing
 from typing import Dict, Tuple
 
 
@@ -13,9 +14,17 @@ class _Meta(dict):
             raise RuntimeError("No meta key/type given.")
 
         super().__init__(*args, **kwargs)
+        # for value in kwargs.values():
+        #     assert isinstance(value, type), f"Value '{value}' is not a type"
 
         for value in kwargs.values():
-            assert isinstance(value, type), f"Value '{value}' is not a type"
+            if hasattr(value, '__module__'):
+                if value.__module__ == 'builtins':
+                    assert isinstance(value, type), f"Value '{value}' is not a builtin type"
+                else:
+                    assert isinstance(value.__module__, typing), f"Value '{value}' is not a valid type from typing"
+            else:
+                raise AssertionError(f"Value '{value}' is not a type")
 
     def parse_result(self, result: Dict) -> Tuple[Tuple, Dict]:
         """
@@ -81,6 +90,7 @@ class _Meta(dict):
         diff = set(_type.keys()) - set(self.keys())
         if diff:
             raise RuntimeError('{} is not a superset of {}.'.format(self, _type))
+
 
     def downcast_result(self, result: Tuple[Tuple, Dict]) -> Tuple[Tuple, Dict]:
         """

@@ -19,7 +19,6 @@ def test_meta_empty():
 def test_meta_value_not_type():
     with pytest.raises(AssertionError) as e:
         _Meta(x=1)
-        import pdb; pdb.set_trace()
     assert str(e.value) == "Value '1' is not a type"
 
 def test_meta_parse_result():

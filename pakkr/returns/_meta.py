@@ -1,6 +1,6 @@
 from typing import Dict, Tuple
-from typing import __all__ as typing_types
-import typing 
+import typing
+
 
 class _Meta(dict):
     """
@@ -12,7 +12,7 @@ class _Meta(dict):
     def __init__(self, *args, **kwargs):
         if not kwargs:
             raise RuntimeError("No meta key/type given.")
- 
+
         super().__init__(*args, **kwargs)
 
         for value in kwargs.values():
@@ -93,7 +93,6 @@ class _Meta(dict):
         if diff:
             raise RuntimeError('{} is not a superset of {}.'.format(self, _type))
 
-
     def downcast_result(self, result: Tuple[Tuple, Dict]) -> Tuple[Tuple, Dict]:
         """
         Downcast the return value of a Callable to what this instance defines.
@@ -125,8 +124,3 @@ class _Meta(dict):
 
             meta[key] = item
         return (), meta
-
-
-# m = _Meta(x=Tuple[int])
-# m.parse_result({'x': (1, 3, 4)})
-from pakkr import returns

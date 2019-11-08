@@ -1,14 +1,27 @@
+from typing import Any, Dict, List, Optional, Tuple, Union, Generator
+
 import pytest
+
+from ..pipeline import Pipeline
 from ._meta import _Meta
 from ._no_return import _NoReturn
 from ._return import _Return
-from typing import Any, List, Union, Callable, Tuple, Optional, Dict
-from ..pipeline import Pipeline
 
 NoneType = type(None)
 
 
-def test_Union_typing_parse_result():
+def test_generator_typing_parse_result():
+    def generator():
+        yield 1
+        yield 2
+        yield 3
+    gen = generator()
+    m = _Meta(x=Generator)
+    assert m == {'x': Generator}
+    assert m.parse_result({'x': gen}) == ((), {'x': gen})
+
+
+def test_union_typing_parse_result():
     m = _Meta(x=Union[int, str, float])
     assert m == {'x': Union[int, str, float]}
     assert m.parse_result({'x': 123}) == ((), {'x': 123})
@@ -16,10 +29,10 @@ def test_Union_typing_parse_result():
     assert m.parse_result({'x': '123'}) == ((), {'x': '123'})
 
 
-def test_Complex_Union_typing_parse_result():
+def test_complex_union_typing_parse_result():
     m = _Meta(x=Union[List, str, Dict])
     assert m == {'x': Union[List, str, Dict]}
-    assert m.parse_result({'x': [1.]}) == ((), {'x':[1.]})
+    assert m.parse_result({'x': [1.]}) == ((), {'x': [1.]})
     assert m.parse_result({'x': {'y': [1.]}}) == ((), {'x': {'y': [1.]}})
     assert m.parse_result({'x': '123'}) == ((), {'x': '123'})
 

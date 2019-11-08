@@ -14,14 +14,12 @@ class _Meta(dict):
             raise RuntimeError("No meta key/type given.")
 
         super().__init__(*args, **kwargs)
-        # for value in kwargs.values():
-        #     assert isinstance(value, type), f"Value '{value}' is not a type"
 
         for value in kwargs.values():
             if hasattr(value, '__module__'):
-                if value.__module__ == 'builtins':
-                    assert isinstance(value, type), f"Value '{value}' is not a builtin type"
-                elif value.__module__ == 'typing':
+                # if value.__module__ == 'builtins':
+                #     assert isinstance(value, type), f"Value '{value}' is not a builtin type"
+                if value.__module__ == 'typing':
                     assert value.__module__ == 'typing',\
                         f"Value '{value}' is not a valid type from typing"
                 elif not isinstance(value, type) and getattr(value, "_name", "") not in typing_types:
@@ -61,15 +59,14 @@ class _Meta(dict):
             msg += "Unexpected meta keys {}.".format(extra) if extra else ""
             raise RuntimeError(msg)
 
-        # TODO:
-        # 1 handle special cases in _genericForm, such as Callable, Hashable, Mapping, Generator
-        # 2 handle typing._sepcialForm (w/o __origin__ attributes) , such as Any, Optional --> Union
+        # notes: k is var name i.e. text_embedder
+        # and t is var type i.e. Pipeline
+        # reuslt (1, 2, 3)
         for k, t in self.items():
-            if t.__module__ == 'typing':
-                if hasattr(t, '__origin__'):
-                    if t.__origin__ == typing.Union:
-                        wrong_types = [(k, t, type(result[k])) for k, t in self.items() if not isinstance(result[k], t.__args__)]
-                    else:
+            if t.__module__ == 'typing' and hasattr(t, '__origin__'):
+                if t.__origin__ == typing.Union:
+                    wrong_types = [(k, t, type(result[k])) for k, t in self.items() if not isinstance(result[k], t.__args__)]
+                else:
                         wrong_types = [(k, t, type(result[k])) for k, t in self.items() if not isinstance(result[k], t.__origin__)]
             else:
                 wrong_types = [(k, t, type(result[k])) for k, t in self.items() if not isinstance(result[k], t)]

@@ -2,11 +2,28 @@ import pytest
 from ._meta import _Meta
 from ._no_return import _NoReturn
 from ._return import _Return
-from typing import Any, List, Union, Callable, Tuple, Optional
+from typing import Any, List, Union, Callable, Tuple, Optional, Dict 
 
 NoneType = type(None)
 
-def test_specialForm_typing_parse_result():
+
+def test_Union_typing_parse_result():
+    m = _Meta(x=Union[int, str, float])
+    assert m == {'x': Union[int, str, float]}
+    assert m.parse_result({'x': 123}) == ((), {'x': 123})
+    assert m.parse_result({'x': 123.}) == ((), {'x': 123.})
+    assert m.parse_result({'x': '123'}) == ((), {'x': '123'})
+
+
+def test_Complex_Union_typing_parse_result():
+    m = _Meta(x=Union[List, str, Dict])
+    assert m == {'x': Union[List, str, Dict]}
+    assert m.parse_result({'x': [1.]}) == ((), {'x':[1.]})
+    assert m.parse_result({'x': {'y': [1.]}}) == ((), {'x': {'y': [1.]}})
+    assert m.parse_result({'x': '123'}) == ((), {'x': '123'})
+
+
+def test_Optional_typing_parse_result():
     m = _Meta(x=Optional[int], y=Optional[str])
     assert m == {'x': Union[int, NoneType], 'y': Union[str, NoneType]}
     assert m.parse_result({'x': None, 'y': 'hello'}) ==\

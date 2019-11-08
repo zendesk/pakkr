@@ -1,5 +1,6 @@
 from typing import Dict, Tuple
 from typing import __all__ as typing_types
+import typing 
 
 class _Meta(dict):
     """
@@ -26,9 +27,9 @@ class _Meta(dict):
                 elif not isinstance(value, type) and getattr(value, "_name", "") not in typing_types:
                     raise AssertionError(f"Value '{value}' is not a type nor in typing_types")
                 else:
-                    AssertionError(f"Value '{value}' is not a type nor in typing_types")
+                    assert isinstance(value, type), f"Value '{value}' is not a type nor in typing types"
             else:
-                raise AssertionError(f"Value '{value}' is not a type nor in typing_types")
+                assert isinstance(value, type), f"Value '{value}' is not a type nor in typing types"
 
     def parse_result(self, result: Dict) -> Tuple[Tuple, Dict]:
         """
@@ -60,14 +61,16 @@ class _Meta(dict):
             msg += "Unexpected meta keys {}.".format(extra) if extra else ""
             raise RuntimeError(msg)
 
-        # wrong_types = [(k, t, type(result[k])) for k, t in self.items() if not isinstance(result[k], t)]
-        #TODO: 
+        # TODO:
         # 1 handle special cases in _genericForm, such as Callable, Hashable, Mapping, Generator
-        # 2 handle typing._sepcialForm (w/o __origin__ attributes) , such as Any
+        # 2 handle typing._sepcialForm (w/o __origin__ attributes) , such as Any, Optional --> Union
         for k, t in self.items():
             if t.__module__ == 'typing':
                 if hasattr(t, '__origin__'):
-                    wrong_types = [(k, t, type(result[k])) for k, t in self.items() if not isinstance(result[k], t.__origin__)]
+                    if t.__origin__ == typing.Union:
+                        wrong_types = [(k, t, type(result[k])) for k, t in self.items() if not isinstance(result[k], t.__args__)]
+                    else:
+                        wrong_types = [(k, t, type(result[k])) for k, t in self.items() if not isinstance(result[k], t.__origin__)]
             else:
                 wrong_types = [(k, t, type(result[k])) for k, t in self.items() if not isinstance(result[k], t)]
 
@@ -126,7 +129,6 @@ class _Meta(dict):
         """
         result = result[1]
         assert isinstance(result, Dict), f"Meta should be a dictionary not {type(result)}"
-
         meta = {}
         for key, _type in self.items():
             if key not in result:
@@ -139,5 +141,5 @@ class _Meta(dict):
         return (), meta
 
 
-m = _Meta(x=Tuple[int])
-m.parse_result({'x': (1, 3, 4)})
+# m = _Meta(x=Tuple[int])
+# m.parse_result({'x': (1, 3, 4)})

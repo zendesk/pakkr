@@ -2,7 +2,8 @@ import pytest
 from ._meta import _Meta
 from ._no_return import _NoReturn
 from ._return import _Return
-from typing import Any, List, Union, Callable, Tuple, Optional, Dict 
+from typing import Any, List, Union, Callable, Tuple, Optional, Dict
+from ..pipeline import Pipeline
 
 NoneType = type(None)
 
@@ -30,11 +31,20 @@ def test_Optional_typing_parse_result():
         ((), {'x': None, 'y': 'hello'})
 
 
+def test_custom_class_parse_result():
+    m = _Meta(x=Pipeline)
+    pipeline = Pipeline()
+    assert m == {'x': Pipeline}
+    assert m.parse_result({'x': pipeline}) ==\
+        ((), {'x': pipeline})
+
+
 def test_complex_typing_parse_result():
     m = _Meta(x=List[int], y=Tuple[float])
     assert m == {'x': List[int], 'y': Tuple[float]}
     assert m.parse_result({'x': [1, 2, 3], 'y': (1.0, 0.0, 2.0)}) ==\
         ((), {'x': [1, 2, 3], 'y': (1.0, 0.0, 2.0)})
+
 
 def test_meta_args():
     with pytest.raises(RuntimeError) as e:
@@ -47,10 +57,12 @@ def test_meta_empty():
         _Meta()
     assert str(e.value) == "No meta key/type given."
 
+
 def test_meta_value_not_type():
     with pytest.raises(AssertionError) as e:
         _Meta(x=1)
     assert str(e.value) == "Value '1' is not a type nor in typing types"
+
 
 def test_meta_parse_result():
     m = _Meta(x=int, y=str)

@@ -12,21 +12,11 @@ class _Meta(dict):
     def __init__(self, *args, **kwargs):
         if not kwargs:
             raise RuntimeError("No meta key/type given.")
-
+ 
         super().__init__(*args, **kwargs)
 
         for value in kwargs.values():
-            if hasattr(value, '__module__'):
-                # if value.__module__ == 'builtins':
-                #     assert isinstance(value, type), f"Value '{value}' is not a builtin type"
-                if value.__module__ == 'typing':
-                    assert value.__module__ == 'typing',\
-                        f"Value '{value}' is not a valid type from typing"
-                elif not isinstance(value, type) and getattr(value, "_name", "") not in typing_types:
-                    raise AssertionError(f"Value '{value}' is not a type nor in typing_types")
-                else:
-                    assert isinstance(value, type), f"Value '{value}' is not a type nor in typing types"
-            else:
+            if not (hasattr(value, '__module__') and value.__module__ == 'typing'):
                 assert isinstance(value, type), f"Value '{value}' is not a type nor in typing types"
 
     def parse_result(self, result: Dict) -> Tuple[Tuple, Dict]:
@@ -59,17 +49,16 @@ class _Meta(dict):
             msg += "Unexpected meta keys {}.".format(extra) if extra else ""
             raise RuntimeError(msg)
 
-        # notes: k is var name i.e. text_embedder
-        # and t is var type i.e. Pipeline
-        # reuslt (1, 2, 3)
-        for k, t in self.items():
-            if t.__module__ == 'typing' and hasattr(t, '__origin__'):
+        def _check_t(k, t):
+            if hasattr(t, '__origin__'):
                 if t.__origin__ == typing.Union:
-                    wrong_types = [(k, t, type(result[k])) for k, t in self.items() if not isinstance(result[k], t.__args__)]
+                    return isinstance(result[k], t.__args__)
                 else:
-                        wrong_types = [(k, t, type(result[k])) for k, t in self.items() if not isinstance(result[k], t.__origin__)]
+                    return isinstance(result[k], t.__origin__)  # i.e. List[int]
             else:
-                wrong_types = [(k, t, type(result[k])) for k, t in self.items() if not isinstance(result[k], t)]
+                return isinstance(result[k], t)
+
+        wrong_types = [(k, t, type(result[k])) for k, t in self.items() if not _check_t(k, t)]
 
         if wrong_types:
             template = "key '{}' should be type {} but {} was returned"
@@ -140,3 +129,4 @@ class _Meta(dict):
 
 # m = _Meta(x=Tuple[int])
 # m.parse_result({'x': (1, 3, 4)})
+from pakkr import returns

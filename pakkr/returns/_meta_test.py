@@ -11,11 +11,7 @@ NoneType = type(None)
 
 
 def test_generator_typing_parse_result():
-    def generator():
-        yield 1
-        yield 2
-        yield 3
-    gen = generator()
+    gen = (i for i in range(3))
     m = _Meta(x=Generator)
     assert m == {'x': Generator}
     assert m.parse_result({'x': gen}) == ((), {'x': gen})

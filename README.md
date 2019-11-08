@@ -41,6 +41,30 @@ Running the above code should print:
 Original input was 3 and it became 11 and 9 after processing
 ```
 
+## Special Case: Callable
+It is strongly encouraged that users to avoid using `Callable` for return type, instead, try to use the `original class name` for `Callable` returns
+
+encouraged:
+```
+@returns(text_embedder=Pipeline):
+    text_embedder = Pipeline(
+      ....
+    )
+    return {'text_embedder': text_embedder}
+```
+
+**NOT** encouraged
+```
+@returns(text_embedder=Callable):
+    text_embedder = Pipeline(
+      ....
+    )
+    return {'text_embedder': text_embedder}
+```
+
+
+
+
 ## What's going on?
 `returns` is used to indicate how the return values should be interpreted; `@returns(int, str, x=bool)` means the `Callable` should be returning something like `return 10, 'hello', {'x': True}` and the `10` and `'hello'` will be passed as two positional arguments into the next `Callable` while `x` would be cached in the meta space and be injected if any following `Callable`s require `x` but not being given as positional argument from the previous `Callable`.
 

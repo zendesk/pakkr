@@ -8,12 +8,8 @@ pytest = "*"
 pytest-cov = "*"
 mock = "*"
 ipython = "*"
-mypy = "*"
-flake8 = "*"
 
 [packages]
-pipfile = "*"
-pytest = "*"
 
 [requires]
-python_version = "3.7.4"
+python_version = "3.7"

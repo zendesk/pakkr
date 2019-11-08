@@ -1,6 +1,6 @@
 language: python
-dist: trusty
-python: "3.7.4"
+dist: bionic
+python: "3.7"
 env:
   global:
     - BOTO_CONFIG=/dev/null

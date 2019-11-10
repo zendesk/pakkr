@@ -1,12 +1,14 @@
-import pytest
-from mock import call, MagicMock, Mock, patch
-from pakkr import Pipeline, returns
-from pakkr.cmd_args.cmd_args import cmd_args
-from pakkr.cmd_args.argument import argument
-from pakkr.pipeline import _identifier, _get_pakkr_depth
-from pakkr.exception import PakkrError
 from collections import namedtuple
+from typing import Dict, Tuple
 
+import pytest
+from mock import MagicMock, Mock, call, patch
+
+from pakkr import Pipeline, returns
+from pakkr.cmd_args.argument import argument
+from pakkr.cmd_args.cmd_args import cmd_args
+from pakkr.exception import PakkrError
+from pakkr.pipeline import _get_pakkr_depth, _identifier
 
 _FrameInfo = namedtuple('_FrameInfo', ('frame', 'function'))
 _Frame = namedtuple('_Frame', ('f_locals'))
@@ -67,7 +69,7 @@ def test_pipeline_step_exception():
     assert str(e.value).startswith("something is wrong")
 
 
-def test_nested_pipeline():
+def test_nested_pipeline_returns_meta():
     inner_step = returns(str, a=bool)(lambda i: ("inner_" + str(i), {'a': True}))
     inner_pipeline = Pipeline(inner_step, _name="inner_pipeline")
 
@@ -77,6 +79,31 @@ def test_nested_pipeline():
     outer_pipeline = Pipeline(inner_pipeline, outer_step, _name="outer_pipeline")
 
     assert outer_pipeline(100, x=-1) == (False, "001_renni", -1)
+
+
+def test_nested_pipeline_has_access_to_meta():
+    """When a pipeline is being used as a step directly, it should have access to
+    meta from previous steps and it's returned meta should be available to following
+    steps."""
+    @returns(int, x=str)
+    def outer_step(n: int) -> Tuple[int, Dict[str, str]]:
+        return n + 1, {"x": "hello"}
+
+    @returns(str, a=bool)
+    def inner_pipeline_step(m: int, x: str) -> Tuple[str, Dict[str, bool]]:
+        assert m == 101
+        return f"{x}, world!", {"a": True}
+    inner_pipeline = Pipeline(inner_pipeline_step, _name="inner_pipeline")
+
+    @returns(str)
+    def check_result_and_meta(s: str, **meta) -> str:
+        assert s == "hello, world!"
+        assert meta["a"] is True
+        return "OK"
+
+    outer_pipeline = Pipeline(outer_step, inner_pipeline, check_result_and_meta, _name="outer_pipeline")
+
+    assert outer_pipeline(100) == "OK"
 
 
 def test_nested_pipeline_step_exception():

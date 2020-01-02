@@ -26,8 +26,8 @@ def test_returns():
     r = _Return([Optional[int]], _Meta(x=bool))
     assert str(r) == "((typing.Union[int, NoneType],), {'x': <class 'bool'>})"
 
-    r = _Return([Union[str, int, float], _Meta(x=Callable)])
-    assert str(r) == "((typing.Union[str, int, float], {'x': typing.Callable}), None)"
+    r = _Return([Union[str, int, float]], _Meta(x=Callable))
+    assert str(r) == "((typing.Union[str, int, float],), {'x': typing.Callable})"
 
     r = _Return([Callable], _Meta(x=int))
     assert str(r) == "((typing.Callable,), {'x': <class 'int'>})"
@@ -66,7 +66,7 @@ def test_return_parse_result():
     assert r.parse_result((1, {"x": False})) == ((1,), {"x": False})
     assert r.parse_result((None, {"x": False})) == ((None,), {"x": False})
 
-    r = _Return([Union[str, int, float], _Meta(x=Callable)])
+    r = _Return([Union[str, int, float]], _Meta(x=Callable))
     assert r.parse_result((1.0, {"x": Pipeline})) == ((1.0,), {'x': Pipeline})
     assert r.parse_result(('Wow', {"x": Pipeline})) == (('Wow',), {'x': Pipeline})
 

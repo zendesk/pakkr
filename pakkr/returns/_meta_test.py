@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple, Union, Generator
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union, Generator
 
 import pytest
 
@@ -8,6 +8,12 @@ from ._no_return import _NoReturn
 from ._return import _Return
 
 NoneType = type(None)
+
+
+def test_callable_typing_parse_result():
+    m = _Meta(x=Callable)
+    assert m == {'x': Callable}
+    assert m.parse_result({'x': Callable}) == ((), {'x': Callable})
 
 
 def test_generator_typing_parse_result():

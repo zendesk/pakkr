@@ -1,4 +1,4 @@
-from typing import Callable, Generator, Optional, Union
+from typing import Callable, Generator, List, Optional, Union
 
 import pytest
 
@@ -61,6 +61,9 @@ def test_return_parse_result():
         r.parse_result(('hello', 1, {'x': True}))
     assert str(e.value) == ("Values error: 'hello' is not of type <class 'int'> and "
                             "'1' is not of type <class 'str'>.")
+
+    r = _Return([List[int]], None)
+    assert r.parse_result([1, 2]) == (([1, 2],), {})
 
     r = _Return([Optional[int]], _Meta(x=bool))
     assert r.parse_result((1, {"x": False})) == ((1,), {"x": False})

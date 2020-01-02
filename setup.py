@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='Pakkr',
+    name='pakkr',
     description='Pipeline utility library',
     url='https://github.com/zendesk/pakkr',
     version='0.1.0.dev0',

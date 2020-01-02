@@ -13,7 +13,7 @@ Coming soon.
 ```bash
 git clone git@github.com:zendesk/pakkr.git
 cd pakkr
-pip install .
+python setup.py install
 ```
 
 # Usage
@@ -43,6 +43,41 @@ Original input was 3 and it became 11 and 9 after processing
 
 ## What's going on?
 `returns` is used to indicate how the return values should be interpreted; `@returns(int, str, x=bool)` means the `Callable` should be returning something like `return 10, 'hello', {'x': True}` and the `10` and `'hello'` will be passed as two positional arguments into the next `Callable` while `x` would be cached in the meta space and be injected if any following `Callable`s require `x` but not being given as positional argument from the previous `Callable`.
+
+
+# Development
+This project uses `tox` to manage testing on multiple Python versions assuming the required Python versions are available.
+```
+git clone git@github.com:zendesk/pakkr.git
+cd pakkr
+pip install tox
+tox
+```
+
+Optionally, uses `pyenv` and `pipenv` to manage Python installation and development dependencies.
+```
+git clone git@github.com:zendesk/pakkr.git
+cd pakkr
+
+# Install pyenv, see instructions in https://github.com/pyenv/pyenv
+# Install Python versions supported by pakkr if not available locally
+# pyenv install 3.6.10
+# pyenv install 3.7.6
+# pyenv install 3.8.1
+
+# Set available Python verions
+pyenv local 3.6.10 3.7.6 3.8.1
+
+# Install pipenv
+pip install pipenv
+pipenv sync --dev
+
+# Run tests
+pipenv run tox
+```
+
+# Reporting Bugs
+Please [raise an isses](https://github.com/zendesk/pakkr/issues/new) in GitHub.
 
 
 # Contributing

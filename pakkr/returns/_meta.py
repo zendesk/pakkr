@@ -1,4 +1,5 @@
 from typing import Dict, Tuple
+import typing
 
 
 class _Meta(dict):
@@ -15,7 +16,8 @@ class _Meta(dict):
         super().__init__(*args, **kwargs)
 
         for value in kwargs.values():
-            assert isinstance(value, type), f"Value '{value}' is not a type"
+            if not (hasattr(value, '__module__') and value.__module__ == 'typing'):
+                assert isinstance(value, type), f"Value '{value}' is not a type nor in typing types"
 
     def parse_result(self, result: Dict) -> Tuple[Tuple, Dict]:
         """
@@ -47,8 +49,17 @@ class _Meta(dict):
             msg += "Unexpected meta keys {}.".format(extra) if extra else ""
             raise RuntimeError(msg)
 
-        wrong_types = [(k, t, type(result[k])) for k, t in self.items()
-                       if not isinstance(result[k], t)]
+        def _check_t(k, t):
+            if hasattr(t, '__origin__'):
+                if t.__origin__ == typing.Union:
+                    return isinstance(result[k], t.__args__)
+                else:
+                    return isinstance(result[k], t.__origin__)  # i.e. List[int]
+            else:
+                return isinstance(result[k], t)
+
+        wrong_types = [(k, t, type(result[k])) for k, t in self.items() if not _check_t(k, t)]
+
         if wrong_types:
             template = "key '{}' should be type {} but {} was returned"
             msg = " and ".join(template.format(*t) for t in wrong_types)
@@ -103,7 +114,6 @@ class _Meta(dict):
         """
         result = result[1]
         assert isinstance(result, Dict), f"Meta should be a dictionary not {type(result)}"
-
         meta = {}
         for key, _type in self.items():
             if key not in result:

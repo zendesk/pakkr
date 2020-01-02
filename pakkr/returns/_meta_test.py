@@ -1,8 +1,67 @@
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union, Generator
+
 import pytest
+
+from ..pipeline import Pipeline
 from ._meta import _Meta
 from ._no_return import _NoReturn
 from ._return import _Return
-from typing import Any
+
+NoneType = type(None)
+
+
+def test_callable_typing_parse_result():
+    m = _Meta(x=Callable)
+    assert m == {'x': Callable}
+    assert m.parse_result({'x': Callable}) == ((), {'x': Callable})
+
+
+def test_generator_typing_parse_result():
+    gen = (i for i in range(3))
+    m = _Meta(x=Generator)
+    assert m == {'x': Generator}
+    assert m.parse_result({'x': gen}) == ((), {'x': gen})
+
+
+def test_union_typing_parse_result():
+    m = _Meta(x=Union[int, str, float])
+    assert m == {'x': Union[int, str, float]}
+    assert m.parse_result({'x': 123}) == ((), {'x': 123})
+    assert m.parse_result({'x': 123.}) == ((), {'x': 123.})
+    assert m.parse_result({'x': '123'}) == ((), {'x': '123'})
+
+
+def test_complex_union_typing_parse_result():
+    m = _Meta(x=Union[List, str, Dict])
+    assert m == {'x': Union[List, str, Dict]}
+    assert m.parse_result({'x': [1.]}) == ((), {'x': [1.]})
+    assert m.parse_result({'x': {'y': [1.]}}) == ((), {'x': {'y': [1.]}})
+    assert m.parse_result({'x': '123'}) == ((), {'x': '123'})
+
+    with pytest.raises(RuntimeError) as e:
+        m.parse_result({'x': 1})
+
+
+def test_Optional_typing_parse_result():
+    m = _Meta(x=Optional[int], y=Optional[str])
+    assert m == {'x': Union[int, NoneType], 'y': Union[str, NoneType]}
+    assert m.parse_result({'x': None, 'y': 'hello'}) ==\
+        ((), {'x': None, 'y': 'hello'})
+
+
+def test_custom_class_parse_result():
+    m = _Meta(x=Pipeline)
+    pipeline = Pipeline()
+    assert m == {'x': Pipeline}
+    assert m.parse_result({'x': pipeline}) ==\
+        ((), {'x': pipeline})
+
+
+def test_complex_typing_parse_result():
+    m = _Meta(x=List[int], y=Tuple[float])
+    assert m == {'x': List[int], 'y': Tuple[float]}
+    assert m.parse_result({'x': [1, 2, 3], 'y': (1.0, 0.0, 2.0)}) ==\
+        ((), {'x': [1, 2, 3], 'y': (1.0, 0.0, 2.0)})
 
 
 def test_meta_args():
@@ -20,7 +79,7 @@ def test_meta_empty():
 def test_meta_value_not_type():
     with pytest.raises(AssertionError) as e:
         _Meta(x=1)
-    assert str(e.value) == "Value '1' is not a type"
+    assert str(e.value) == "Value '1' is not a type nor in typing types"
 
 
 def test_meta_parse_result():

@@ -1,4 +1,8 @@
+from typing import Callable, Generator, Optional, Union
+
 import pytest
+
+from ..pipeline import Pipeline
 from ._meta import _Meta
 from ._no_return import _NoReturn
 from ._return import _Return
@@ -18,6 +22,18 @@ def test_returns():
     with pytest.raises(RuntimeError) as e:
         _Return([], None)
     assert str(e.value) == "'values' and 'meta' are empty, use _NoReturn instead."
+
+    r = _Return([Optional[int]], _Meta(x=bool))
+    assert str(r) == "((typing.Union[int, NoneType],), {'x': <class 'bool'>})"
+
+    r = _Return([Union[str, int, float]], _Meta(x=Callable))
+    assert str(r) == "((typing.Union[str, int, float],), {'x': typing.Callable})"
+
+    r = _Return([Callable], _Meta(x=int))
+    assert str(r) == "((typing.Callable,), {'x': <class 'int'>})"
+
+    r = _Return([Generator], _Meta(x=int))
+    assert str(r) == "((typing.Generator,), {'x': <class 'int'>})"
 
 
 def test_return_eq():
@@ -45,6 +61,21 @@ def test_return_parse_result():
         r.parse_result(('hello', 1, {'x': True}))
     assert str(e.value) == ("Values error: 'hello' is not of type <class 'int'> and "
                             "'1' is not of type <class 'str'>.")
+
+    r = _Return([Optional[int]], _Meta(x=bool))
+    assert r.parse_result((1, {"x": False})) == ((1,), {"x": False})
+    assert r.parse_result((None, {"x": False})) == ((None,), {"x": False})
+
+    r = _Return([Union[str, int, float]], _Meta(x=Callable))
+    assert r.parse_result((1.0, {"x": Pipeline})) == ((1.0,), {'x': Pipeline})
+    assert r.parse_result(('Wow', {"x": Pipeline})) == (('Wow',), {'x': Pipeline})
+
+    r = _Return([Callable], _Meta(x=int))
+    assert r.parse_result((Pipeline, {"x": 1})) == ((Pipeline,), {'x': 1})
+
+    gen = (i for i in range(3))
+    r = _Return([Generator], _Meta(x=int))
+    assert r.parse_result((gen, {"x": 1})) == ((gen,), {'x': 1})
 
 
 def test_return_assert_is_superset():

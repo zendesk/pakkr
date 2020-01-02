@@ -32,6 +32,9 @@ def test_complex_union_typing_parse_result():
     assert m.parse_result({'x': {'y': [1.]}}) == ((), {'x': {'y': [1.]}})
     assert m.parse_result({'x': '123'}) == ((), {'x': '123'})
 
+    with pytest.raises(RuntimeError) as e:
+        m.parse_result({'x': 1})
+
 
 def test_Optional_typing_parse_result():
     m = _Meta(x=Optional[int], y=Optional[str])

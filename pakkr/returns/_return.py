@@ -1,5 +1,6 @@
+from typing import Dict, Iterable, Tuple, Union
+
 from ._meta import _Meta
-from typing import Dict, Iterable, Tuple
 
 
 class _Return:
@@ -63,6 +64,14 @@ class _Return:
                 sub_args, sub_meta = _type.parse_result(item)
                 args += sub_args
                 meta.update(sub_meta)
+            elif hasattr(_type, '__origin__'):
+                if (
+                        _type.__origin__ == Union and
+                        isinstance(item, _type.__args__)
+                ):
+                    args.append(item)
+                elif isinstance(item, _type.__origin__):
+                    args.append(item)
             elif isinstance(item, _type):
                 args.append(item)
             else:

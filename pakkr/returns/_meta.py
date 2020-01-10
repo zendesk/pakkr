@@ -50,7 +50,7 @@ class _Meta(dict):
             raise RuntimeError(msg)
 
         def _check_t(k, t):
-            if hasattr(t, '__origin__'):
+            if hasattr(t, '__origin__') and t.__origin__:
                 if t.__origin__ == typing.Union:
                     return isinstance(result[k], t.__args__)
                 else:

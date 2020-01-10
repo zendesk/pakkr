@@ -64,7 +64,7 @@ class _Return:
                 sub_args, sub_meta = _type.parse_result(item)
                 args += sub_args
                 meta.update(sub_meta)
-            elif hasattr(_type, '__origin__'):
+            elif hasattr(_type, '__origin__') and _type.__origin__:
                 if (
                         _type.__origin__ == Union and
                         isinstance(item, _type.__args__)

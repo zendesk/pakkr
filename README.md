@@ -7,7 +7,9 @@ In the process of building machine learning things at Zendesk, we have noticed t
 PAKKR is an utility created to remediate these pain points; it provides the user with a way to specify how return values should be interpreted and optionally caches results and injects them in later steps automatically.
 
 # Install from PyPi
-Coming soon.
+```bash
+pip install pakkr
+```
 
 # Install from source
 ```bash

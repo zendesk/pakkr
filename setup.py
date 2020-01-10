@@ -9,7 +9,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url='https://github.com/zendesk/pakkr',
-    version='0.1.0',
+    version='0.1.1.dev0',
     license='Apache License 2.0',
     maintainer='Zendesk',
     maintainer_email='opensource@zendesk.com',

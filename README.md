@@ -57,7 +57,7 @@ tox
 ```
 
 Optionally, uses `pyenv` and `pipenv` to manage Python installation and development dependencies.
-```
+```bash
 git clone git@github.com:zendesk/pakkr.git
 cd pakkr
 
@@ -79,7 +79,7 @@ pipenv run tox
 ```
 
 # Reporting Bugs
-Please [raise an isses](https://github.com/zendesk/pakkr/issues/new) in GitHub.
+Please [raise an issue](https://github.com/zendesk/pakkr/issues/new) via GitHub.
 
 
 # Contributing
@@ -90,4 +90,4 @@ Improvements are always welcome. Please follow these steps to contribute
 3. Maintainers will merge your changes
 
 # License
-Use of this software is subject to important terms and conditions as set forth in the [LICENSE](https://github.com/zendesk/pakkr/blob/master/LICENSE) file.
+Use of this software is subject to important terms and conditions as set forth in the [LICENSE](LICENSE) file.

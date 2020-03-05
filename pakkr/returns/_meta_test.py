@@ -7,8 +7,6 @@ from ._meta import _Meta
 from ._no_return import _NoReturn
 from ._return import _Return
 
-NoneType = type(None)
-
 
 def test_callable_typing_parse_result():
     m = _Meta(x=Callable)
@@ -44,7 +42,7 @@ def test_complex_union_typing_parse_result():
 
 def test_Optional_typing_parse_result():
     m = _Meta(x=Optional[int], y=Optional[str])
-    assert m == {'x': Union[int, NoneType], 'y': Union[str, NoneType]}
+    assert m == {'x': Union[int, type(None)], 'y': Union[str, type(None)]}
     assert m.parse_result({'x': None, 'y': 'hello'}) ==\
         ((), {'x': None, 'y': 'hello'})
 

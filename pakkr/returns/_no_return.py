@@ -1,4 +1,4 @@
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 
 class _NoReturn:
@@ -29,7 +29,7 @@ class _NoReturn:
             raise RuntimeError("Do not expect value other than None.")
         return (), {}
 
-    def assert_is_superset(self, _type):
+    def assert_is_superset(self, _type: Optional["_NoReturn"]) -> None:
         """
         Assert this instance is a superset of the given _type.
 

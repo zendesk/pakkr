@@ -1,4 +1,4 @@
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 import typing
 
 
@@ -9,7 +9,7 @@ class _Meta(dict):
     types of the return values keyed by the metadata key name.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         if not kwargs:
             raise RuntimeError("No meta key/type given.")
 
@@ -38,7 +38,7 @@ class _Meta(dict):
         RuntimeError
             when missing or extra keys or mis-match in expected types
         """
-        assert isinstance(result, Dict), f"Meta should be a dictionary not {type(result)}"
+        assert isinstance(result, dict), f"Meta should be a dictionary not {type(result)}"
         this_keys = set(self.keys())
         that_keys = set(result.keys())
         missing = this_keys - that_keys
@@ -66,7 +66,7 @@ class _Meta(dict):
             raise RuntimeError("Meta error: {}.".format(msg))
         return ((), result)
 
-    def assert_is_superset(self, _type):
+    def assert_is_superset(self, _type: Optional["_Meta"]) -> None:
         """
         Assert this instance is a superset of the given _type.
 
@@ -112,13 +112,13 @@ class _Meta(dict):
         RuntimeError
             when mis-match in shape or type, or ambigous conversion
         """
-        result = result[1]
-        assert isinstance(result, Dict), f"Meta should be a dictionary not {type(result)}"
+        _result = result[1]
+        assert isinstance(_result, Dict), f"Meta should be a dictionary not {type(_result)}"
         meta = {}
         for key, _type in self.items():
-            if key not in result:
-                raise RuntimeError("Key '{}' does not exist in {}".format(key, result))
-            item = result[key]
+            if key not in _result:
+                raise RuntimeError("Key '{}' does not exist in {}".format(key, _result))
+            item = _result[key]
             if not isinstance(item, _type):
                 raise RuntimeError("'{}' is not of type {}.".format(item, _type))
 

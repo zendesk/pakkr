@@ -8,6 +8,7 @@ ipython = "*"
 tox = "*"
 tox-pyenv = "*"
 twine = "*"
+mypy = "*"
 
 [packages]
 

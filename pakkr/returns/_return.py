@@ -1,6 +1,7 @@
-from typing import Dict, Iterable, Tuple, Union
+from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 from ._meta import _Meta
+from ._no_return import _NoReturn
 
 
 class _Return:
@@ -11,7 +12,7 @@ class _Return:
     """
     __slots__ = ('values', 'meta', '_types')
 
-    def __init__(self, values, meta=None):
+    def __init__(self, values: Tuple, meta: Optional[_Meta]=None) -> None:
         if not values:
             if meta:
                 raise RuntimeError("'values' is empty, use _Meta instead.")
@@ -48,18 +49,21 @@ class _Return:
             when mis-match in shape or type
         """
         if len(self._types) > 1:
-            assert isinstance(result, Tuple), f"Returned value '{result}' is not an instance of Tuple"
+            assert isinstance(result, tuple), f"Returned value '{result}' is not an instance of Tuple"
             if len(result) != len(self._types):
                 raise RuntimeError("Expecting {} values, but only {} were returned."
                                    .format(len(self._types), len(result)))
 
+        _result: Tuple
         if len(self._types) == 1:
-            result = (result,)
+            _result = (result,)
+        else:
+            _result = result
 
-        args = []
-        meta = {}
+        args: List = []
+        meta: Dict = {}
         wrong_type_args = []
-        for item, _type in zip(result, self._types):
+        for item, _type in zip(_result, self._types):
             if hasattr(_type, "parse_result"):
                 sub_args, sub_meta = _type.parse_result(item)
                 args += sub_args
@@ -84,7 +88,7 @@ class _Return:
 
         return tuple(args), meta
 
-    def assert_is_superset(self, _type):
+    def assert_is_superset(self, _type: Optional[Union["_Return", _Meta, _NoReturn]]) -> None:
         """
         Assert this instance is a superset of the given _type.
 
@@ -117,9 +121,10 @@ class _Return:
                 raise RuntimeError("Return values are not the same '{}' vs '{}'."
                                    .format(self.values, _type.values))
 
-            self.meta.assert_is_superset(_type.meta)
+            if self.meta:
+                self.meta.assert_is_superset(_type.meta)
 
-    def downcast_result(self, result: Tuple[Tuple, Dict]) -> Tuple[Tuple, Dict]:
+    def downcast_result(self, result: Tuple[Tuple, Dict]) -> Tuple[Tuple, Optional[Dict]]:
         """
         Downcast the return value of a Callable to what this instance defines.
 
@@ -139,7 +144,7 @@ class _Return:
             when mis-match in shape or type, or ambigous conversion
         """
 
-        assert result and isinstance(result, Tuple), f"Value '{result}' is not an instance of Tuple"
+        assert result and isinstance(result, tuple), f"Value '{result}' is not an instance of Tuple"
         values = result[0]
         if self.values and len(self.values) != len(values):
             raise RuntimeError("Cannot downcast {} to {}".format(values, self.values))

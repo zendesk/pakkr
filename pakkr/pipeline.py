@@ -74,7 +74,6 @@ class Pipeline:
         return self.__custom_returns.downcast_result(results)
 
     def _run_step(self, args_meta: _ARGS_META, step: Callable[..., _ARGS_META], indent: int) -> _ARGS_META:
-        #assert isinstance(step, Callable), f"{type(step)} is not a Callable"
         assert callable(step), f"{type(step)} is not a Callable"
 
         args, meta = args_meta

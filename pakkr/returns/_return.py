@@ -2,9 +2,10 @@ from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 from ._meta import _Meta
 from ._no_return import _NoReturn
+from ._return_type import _ReturnType
 
 
-class _Return:
+class _Return(_ReturnType):
     """
     Class that describes how to interpret the return value(s) of a Callable.
     Positional arguments are treated as types of return value(s) and keyword
@@ -88,7 +89,7 @@ class _Return:
 
         return tuple(args), meta
 
-    def assert_is_superset(self, _type: Optional[Union["_Return", _Meta, _NoReturn]]) -> None:
+    def assert_is_superset(self, _type: Optional[_ReturnType]) -> None:
         """
         Assert this instance is a superset of the given _type.
 

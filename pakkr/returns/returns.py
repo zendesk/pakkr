@@ -2,6 +2,7 @@ from typing import Any
 from pakkr.returns._meta import _Meta
 from pakkr.returns._no_return import _NoReturn
 from pakkr.returns._return import _Return
+from pakkr.returns._return_type import _ReturnType
 
 
 def returns(*args, **kwargs):

@@ -1,8 +1,10 @@
 from typing import Dict, Optional, Tuple
 import typing
 
+from ._return_type import _ReturnType
 
-class _Meta(dict):
+
+class _Meta(dict, _ReturnType):
     """
     Class that interprets the return value(s) of a Callable as metadata.
     Return values are mapped to metadata using a dictionary containing the
@@ -66,7 +68,7 @@ class _Meta(dict):
             raise RuntimeError("Meta error: {}.".format(msg))
         return ((), result)
 
-    def assert_is_superset(self, _type: Optional["_Meta"]) -> None:
+    def assert_is_superset(self, _type: Optional[_ReturnType]) -> None:
         """
         Assert this instance is a superset of the given _type.
 
@@ -93,7 +95,7 @@ class _Meta(dict):
         if diff:
             raise RuntimeError('{} is not a superset of {}.'.format(self, _type))
 
-    def downcast_result(self, result: Tuple[Tuple, Dict]) -> Tuple[Tuple, Dict]:
+    def downcast_result(self, result: Tuple[Tuple, Dict]) -> Tuple[Tuple, Optional[Dict]]:
         """
         Downcast the return value of a Callable to what this instance defines.
 

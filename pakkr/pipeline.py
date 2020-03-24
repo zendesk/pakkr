@@ -1,8 +1,9 @@
 import inspect
 import logging
+from argparse import ArgumentParser
 from functools import partial, reduce
 from inspect import getfullargspec, Parameter as iParameter, signature
-from typing import Any, Callable
+from typing import Any, Callable, Dict, Optional, Tuple, Union
 from pakkr.cmd_args.cmd_args import ATTR_CMD_ARGS
 from pakkr.exception import (exception_handler,
                              exception_context,
@@ -10,11 +11,14 @@ from pakkr.exception import (exception_handler,
                              pakkr_exchandler,
                              summarise_dictionary)
 from pakkr.logging import IndentationAdapter, log_timing
-from pakkr.returns.returns import collapse
+from pakkr.returns.returns import collapse, _ReturnType
 
 ATTR_RETURNS = "__pakkr_returns__"
 
 pakkr_logger = logging.getLogger('pakkr')
+
+_ARGS_META = Tuple[Tuple, Dict]
+_FILTERED_ARGS_META = Tuple[Tuple, Optional[Dict]]
 
 
 class Pipeline:
@@ -24,9 +28,9 @@ class Pipeline:
     callable is required as input(s) to multiple callables that are not the
     immediate following callable."""
 
-    def __init__(self, *steps, **kwargs):
+    def __init__(self, *steps: Tuple[Callable], **kwargs) -> None:
         super().__init__()
-        self._meta = {}
+        self._meta: Dict = {}
         self._steps = steps
 
         self.__steps_returns = self._collect_steps_returns()
@@ -37,7 +41,7 @@ class Pipeline:
         self._name = kwargs.pop("_name") if "_name" in kwargs else "unnamed_" + str(id(self))
         self._suppress_timing_logs = "_suppress_timing_logs" in kwargs and bool(kwargs.pop("_suppress_timing_logs"))
 
-    def __call__(self, *args, **meta):
+    def __call__(self, *args, **meta) -> Any:
         kwargs = meta.copy()  # shallow copy the original keyword arguments for error msg
         depth, return_meta = _get_pakkr_depth(self)
         logger = IndentationAdapter(pakkr_logger, {'indent': depth,
@@ -63,14 +67,14 @@ class Pipeline:
         else:
             return tuple(new_arg) or None
 
-    def _filter_results(self, results):
+    def _filter_results(self, results: _ARGS_META) -> _FILTERED_ARGS_META:
         if self.__custom_returns is None:
             return results
 
         return self.__custom_returns.downcast_result(results)
 
-    def _run_step(self, args_meta, step, indent):
-        assert isinstance(step, Callable), f"{type(step)} is not a Callable"
+    def _run_step(self, args_meta: _ARGS_META, step: Callable[..., _ARGS_META], indent: int) -> _ARGS_META:
+        assert callable(step), f"{type(step)} is not a Callable"
 
         args, meta = args_meta
         available = meta.copy()
@@ -83,7 +87,7 @@ class Pipeline:
         available.update(logger=logger)
 
         try:
-            opts = {}
+            opts: Dict = {}
             for param in sign_params[len(args):]:
                 if param.kind == iParameter.VAR_POSITIONAL:
                     pass
@@ -115,20 +119,20 @@ class Pipeline:
 
         if hasattr(step, ATTR_RETURNS):
             returns = getattr(step, ATTR_RETURNS)
-            result, new_meta = returns.parse_result(result)
+            _result, new_meta = returns.parse_result(result)
         else:
-            result = (result,)
+            _result = (result,)
 
         self._meta.update(new_meta)
         meta.update(new_meta)
 
-        return (result, meta)
+        return (_result, meta)
 
-    def _collect_steps_returns(self):
+    def _collect_steps_returns(self) -> _ReturnType:
         return collapse(getattr(step, ATTR_RETURNS) if hasattr(step, ATTR_RETURNS) else Any
                         for step in self._steps)
 
-    def __get_pakkr_returns(self):
+    def __get_pakkr_returns(self) -> _ReturnType:
         """The return values' types are usually the return values of the last step and the
         aggregation of meta values, unless the subset of those are explicitly set."""
         if self.__custom_returns is not None:
@@ -136,7 +140,7 @@ class Pipeline:
 
         return self.__steps_returns
 
-    def __set_pakkr_returns(self, _type):
+    def __set_pakkr_returns(self, _type: Optional[_ReturnType]):
         """Setting the return values' types in this context is mainly for removing the return
         values of the last step and/or reducing the number of meta values"""
         self.__steps_returns.assert_is_superset(_type)
@@ -144,25 +148,25 @@ class Pipeline:
 
     __pakkr_returns__ = property(__get_pakkr_returns, __set_pakkr_returns)
 
-    def _add_steps_arguments(self, parser):
+    def _add_steps_arguments(self, parser: ArgumentParser) -> ArgumentParser:
         for step in self._steps:
             if hasattr(step, ATTR_CMD_ARGS):
                 parser = getattr(step, ATTR_CMD_ARGS)(parser)
         return parser
 
-    def __get_pakkr_cmd_args(self):
+    def __get_pakkr_cmd_args(self) -> Callable[[ArgumentParser], ArgumentParser]:
         return self.__custom_cmd_args
 
-    def __set_pakkr_cmd_args(self, fn):
+    def __set_pakkr_cmd_args(self, fn: Callable[[ArgumentParser], ArgumentParser]) -> None:
         self.__custom_cmd_args = fn
 
     __pakkr_cmd_args__ = property(__get_pakkr_cmd_args, __set_pakkr_cmd_args)
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: ArgumentParser) -> ArgumentParser:
         return self.__pakkr_cmd_args__(parser)
 
 
-def _get_pakkr_depth(instance):
+def _get_pakkr_depth(instance) -> Tuple[int, bool]:
     '''Calculate how deeply the given Pipeline instance is nested.
     The call stack (LIFO) will contains all calling functions so we need to filter on
     frames that are executing functions belonging to Pipeline instances which is
@@ -189,10 +193,10 @@ def _get_pakkr_depth(instance):
         if count > -1:
             count += isinstance(obj, Pipeline) and frame_info.function == '__call__'
 
-    return count, used_as_step
+    return count, bool(used_as_step)
 
 
-def _identifier(obj):
+def _identifier(obj) -> str:
     attr = None
     if hasattr(obj, '_name'):
         attr = '_name'

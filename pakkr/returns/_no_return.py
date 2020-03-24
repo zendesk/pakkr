@@ -1,7 +1,9 @@
 from typing import Dict, Optional, Tuple
 
+from ._return_type import _ReturnType
 
-class _NoReturn:
+
+class _NoReturn(_ReturnType):
     """
     Class that specify a Callable has no return value
     """
@@ -29,7 +31,7 @@ class _NoReturn:
             raise RuntimeError("Do not expect value other than None.")
         return (), {}
 
-    def assert_is_superset(self, _type: Optional["_NoReturn"]) -> None:
+    def assert_is_superset(self, _type: Optional[_ReturnType]) -> None:
         """
         Assert this instance is a superset of the given _type.
 
@@ -49,7 +51,7 @@ class _NoReturn:
         if not isinstance(_type, _NoReturn) and _type is not None:
             raise RuntimeError('_NoReturn is not a superset of {}.'.format(_type))
 
-    def downcast_result(self, result: Tuple[Tuple, Dict]) -> Tuple[Tuple, Dict]:
+    def downcast_result(self, result: Tuple[Tuple, Dict]) -> Tuple[Tuple, Optional[Dict]]:
         """
         Downcast the return value of a Callable to nothing.
 

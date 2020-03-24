@@ -291,7 +291,7 @@ def test_get_pakkr_depth_not_found_no_pipeline(mock_inspect):
 
     depth, used_as_step = _get_pakkr_depth(pipeline_1)
     assert depth == -1
-    assert used_as_step is None
+    assert used_as_step is False
 
 
 @patch('pakkr.pipeline.inspect')
@@ -307,7 +307,7 @@ def test_get_pakkr_depth_not_found_with_pipeline(mock_inspect):
 
     depth, used_as_step = _get_pakkr_depth(pipeline_1)
     assert depth == -1
-    assert used_as_step is None
+    assert used_as_step is False
 
 
 @patch('pakkr.pipeline.inspect')

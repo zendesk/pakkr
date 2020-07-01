@@ -6,7 +6,7 @@ on:
 jobs:
   main:
     name: python3-matrix
-    runs-on: zendesk-stable
+    runs-on: ubuntu-latest
     env:
       FOSSA_API_KEY: ${{ secrets.FOSSA_API_KEY }}
     strategy:

@@ -1,3 +1,4 @@
+![repo-checks](https://github.com/zendesk/pakkr/workflows/repo-checks/badge.svg)
 # PAKKR
 Python pipeline utility library
 

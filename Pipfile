@@ -9,6 +9,7 @@ tox = "*"
 tox-pyenv = "*"
 twine = "*"
 mypy = "*"
+urllib3 = ">=1.26.4"
 
 [packages]
 
